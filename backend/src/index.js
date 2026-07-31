@@ -6,6 +6,7 @@ import path from "path";
 import {clerkMiddleware} from '@clerk/express'
 import User from "./models/user.model.js";
 import { connectDB } from "./lib/db.js";
+import job from "./lib/cron.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -33,5 +34,6 @@ if (fs.existsSync(publicDir)) {
 
 app.listen (port, () => {
     connectDB();
-    console.log(`server is running ${port}`)
+    console.log(`server is running ${port}`);
+    if (process.env.NODE_ENV === "production") job.start();
 })
