@@ -1,8 +1,11 @@
- import User from "../models/user.model.js";
- import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
+import Message from "../models/message.model.js";
+import { hasImageKitConfig, uploadChatMedia } from "../lib/imagekit.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 
- export async function getUsersForSidebar(req, res) {
+
+export async function getUsersForSidebar(req, res) {
   try {
     const loggedInUserId = req.user._id;
 
@@ -38,7 +41,7 @@ export async function getConversationsForSidebar(req, res) {
       { $replaceRoot: { newRoot: { $first: "$user" } } },
       // 6. Hide the private clerkId field from the result.
       { $project: { clerkId: 0 } },
-    ]);  
+    ]);
 
     res.status(200).json(conversations);
   } catch (error) {
@@ -95,8 +98,11 @@ export async function sendMessage(req, res) {
 
     await newMessage.save();
 
-    // todo: realtime Scoket IO
-
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    // only send the message in realtime if user is online
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("Error in sendMessage:", error.message);
