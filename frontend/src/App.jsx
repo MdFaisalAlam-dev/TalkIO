@@ -6,10 +6,17 @@ import ChatPage from "./pages/ChatPage";
 import AuthPage from "./pages/AuthPage";
 import { useAuth } from "@clerk/react";
 import PageLoader from "./components/PageLoader";
+import { useAuthStore } from "./store/useAuthStore";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   const { isSignedIn, isLoaded } = useAuth();
   const [timeLoading, setTimeLoading] = useState(true);
+
+  // AuthStore for better performance
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
 
   useEffect(() => {
     // Keeps loader mounted for exactly 5 seconds
@@ -20,11 +27,20 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  const showLoader = !isLoaded || timeLoading;
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (isSignedIn) checkAuth();
+    else clearAuth();
+  }, [checkAuth, clearAuth, isLoaded, isSignedIn]);
+
+  const showLoader = !isLoaded || timeLoading || (isSignedIn && isCheckingAuth);
+
+  if (showLoader) return <PageLoader />;
 
   return (
     <>
-      {showLoader && <PageLoader />}
+      
       
       <ThemeProvider>
         <WallpaperProvider>
@@ -38,6 +54,7 @@ function App() {
               element={!isSignedIn ? <AuthPage /> : <Navigate to={"/"} replace />} 
             />
           </Routes>
+          <Toaster />
         </WallpaperProvider>
       </ThemeProvider>
     </>
