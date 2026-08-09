@@ -9,6 +9,9 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   onlineUsers: [],
   socket: null,
+  justLoggedIn: false, // Tracks if user just went through login flow
+
+  setJustLoggedIn: (value) => set({ justLoggedIn: value }),
 
   checkAuth: async () => {
     set({ isCheckingAuth: true });
